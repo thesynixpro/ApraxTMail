@@ -3,13 +3,19 @@
 FROM eclipse-temurin:17-jdk-jammy AS build
 WORKDIR /app
 
-COPY backend/settings.gradle.kts backend/build.gradle.kts ./
-COPY backend/gradle backend/gradle
-COPY backend/gradlew backend/gradlew.bat ./
-RUN chmod +x gradlew
+# Install Gradle directly (avoids wrapper JAR issues in container builds).
+ARG GRADLE_VERSION=8.10.2
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl unzip \
+    && curl -fsSL "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" -o /tmp/gradle.zip \
+    && unzip -q /tmp/gradle.zip -d /opt \
+    && ln -s "/opt/gradle-${GRADLE_VERSION}/bin/gradle" /usr/local/bin/gradle \
+    && rm -rf /var/lib/apt/lists/* /tmp/gradle.zip
 
+COPY backend/settings.gradle.kts backend/build.gradle.kts ./
 COPY backend/src src
-RUN ./gradlew --no-daemon buildFatJar -x test || ./gradlew --no-daemon fatJar -x test
+
+RUN gradle --no-daemon buildFatJar -x test || gradle --no-daemon fatJar -x test
 
 # ---- Runtime stage ----
 FROM eclipse-temurin:17-jre-jammy

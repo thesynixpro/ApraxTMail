@@ -98,7 +98,6 @@ dependencies {
     ksp(libs.hilt.ext.compiler)
 
     implementation(libs.work.runtime.ktx)
-    implementation(libs.androidx.lifecycle.work)
 
     testImplementation(libs.junit)
 }
