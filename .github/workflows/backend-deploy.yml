@@ -18,6 +18,10 @@ jobs:
     permissions:
       contents: read
       packages: write
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -66,15 +70,14 @@ jobs:
           cache-to: type=gha,mode=max
 
       - name: Deploy over SSH (optional)
-        if: ${{ secrets.DEPLOY_HOST != '' }}
+        if: env.DEPLOY_HOST != ''
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER || 'deploy' }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          host: ${{ env.DEPLOY_HOST }}
+          username: ${{ env.DEPLOY_USER != '' && env.DEPLOY_USER || 'deploy' }}
+          key: ${{ env.DEPLOY_SSH_KEY }}
           script: |
             set -euo pipefail
-            # Server must already have .env and docker-compose.yml staged (never in git).
             if [ -f docker-compose.yml ]; then
               docker compose pull backend || true
               docker compose up -d backend
