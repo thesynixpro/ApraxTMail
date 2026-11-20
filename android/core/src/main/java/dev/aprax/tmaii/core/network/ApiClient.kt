@@ -68,7 +68,7 @@ class ApiClient @Inject constructor() {
         execute(HttpMethod.Get, path, token) {}
 
     suspend inline fun <reified T> post(path: String, body: Any? = null, token: String? = authToken): T =
-        execute(HttpMethod.Post, path, token) { it.setBody(body ?: emptyMap<String, String>()) }
+        execute(HttpMethod.Post, path, token) { setBody(body ?: emptyMap<String, String>()) }
 
     suspend inline fun <reified T> delete(path: String, token: String? = authToken): T =
         execute(HttpMethod.Delete, path, token) {}
