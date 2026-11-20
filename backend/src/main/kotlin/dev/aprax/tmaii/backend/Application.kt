@@ -46,6 +46,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.LoggerFactory
 import java.io.File
 
@@ -232,14 +233,16 @@ fun bootstrapAdmin(config: AppConfig) {
         logger.warn("ADMIN_EMAIL/ADMIN_PASSWORD not set — no admin account available")
         return
     }
-    if (UserRepo.findByEmail(email) != null) {
-        logger.info("Admin account already exists")
-        return
+    transaction {
+        if (UserRepo.findByEmail(email) != null) {
+            logger.info("Admin account already exists")
+            return@transaction
+        }
+        if (password.length < 12) {
+            logger.error("ADMIN_PASSWORD must be at least 12 characters — admin not created")
+            return@transaction
+        }
+        UserRepo.create(kind = Role.ADMIN.name, email = email, passwordHash = PasswordHasher.hash(password))
+        logger.info("Bootstrapped first admin account for {}", email)
     }
-    if (password.length < 12) {
-        logger.error("ADMIN_PASSWORD must be at least 12 characters — admin not created")
-        return
-    }
-    UserRepo.create(kind = Role.ADMIN.name, email = email, passwordHash = PasswordHasher.hash(password))
-    logger.info("Bootstrapped first admin account for {}", email)
 }
