@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-aprax_tmaii}
+      POSTGRES_USER: ${POSTGRES_USER:-aprax}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-aprax} -d $${POSTGRES_DB:-aprax_tmaii}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-aprax_tmaii}
+      DATABASE_USER: ${POSTGRES_USER:-aprax}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      PORT: "8080"
+    ports:
+      - "${PORT:-8080}:8080"
+
+volumes:
+  pgdata:

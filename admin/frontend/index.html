@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Aprax TMaii — Admin</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="login-view" class="centered">
+    <form id="login-form" class="card login-card">
+      <h1>Aprax TMaii</h1>
+      <p class="muted">Administrator sign-in</p>
+      <label>Email
+        <input id="login-email" type="email" autocomplete="username" required />
+      </label>
+      <label>Password
+        <input id="login-password" type="password" autocomplete="current-password" required />
+      </label>
+      <button type="submit" id="login-btn">Sign in</button>
+      <p id="login-error" class="error" hidden></p>
+    </form>
+  </div>
+
+  <div id="app-view" hidden>
+    <header class="topbar">
+      <div class="brand">Aprax <strong>Admin</strong></div>
+      <nav id="tabs">
+        <button data-tab="stats" class="tab active">Stats</button>
+        <button data-tab="providers" class="tab">Providers</button>
+        <button data-tab="usage" class="tab">Usage</button>
+        <button data-tab="users" class="tab">Users</button>
+        <button data-tab="audit" class="tab">Audit</button>
+      </nav>
+      <button id="logout-btn" class="ghost">Sign out</button>
+    </header>
+
+    <main>
+      <section id="panel-stats" class="panel active">
+        <div class="grid" id="stats-grid"></div>
+        <h2>Recent errors</h2>
+        <div class="table-wrap"><table id="errors-table">
+          <thead><tr><th>Provider</th><th>Action</th><th>Code</th><th>Status</th><th>At</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+      </section>
+
+      <section id="panel-providers" class="panel">
+        <div id="providers-list" class="cards"></div>
+      </section>
+
+      <section id="panel-usage" class="panel">
+        <div class="grid" id="usage-summary"></div>
+        <h2>Daily requests (30d)</h2>
+        <div class="table-wrap"><table id="usage-table">
+          <thead><tr><th>Date</th><th>Total</th><th>Failed</th><th>By provider</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+      </section>
+
+      <section id="panel-users" class="panel">
+        <div class="table-wrap"><table id="users-table">
+          <thead><tr><th>Email</th><th>Kind</th><th>Status</th><th>Created</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+      </section>
+
+      <section id="panel-audit" class="panel">
+        <div class="table-wrap"><table id="audit-table">
+          <thead><tr><th>At</th><th>Admin</th><th>Action</th><th>Target</th><th>Details</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+      </section>
+    </main>
+    <div id="toast" hidden></div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
