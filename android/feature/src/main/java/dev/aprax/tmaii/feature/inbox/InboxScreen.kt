@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MarkEmailRead
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.outlined.Link
@@ -123,7 +124,7 @@ fun InboxScreen(
                     IconButton(onClick = {
                         clipboard.setText(AnnotatedString(code))
                     }) {
-                        Icon(androidx.compose.material.icons.Icons.Filled.ContentCopy, contentDescription = "Copy code")
+                        Icon(Icons.Filled.ContentCopy, contentDescription = "Copy code")
                     }
                 }
             }

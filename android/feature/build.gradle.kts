@@ -53,6 +53,7 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
 
     implementation(libs.navigation.compose)
+    implementation(libs.datastore.preferences)
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
     ksp(libs.hilt.compiler)

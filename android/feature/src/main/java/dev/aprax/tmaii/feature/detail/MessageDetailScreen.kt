@@ -133,15 +133,15 @@ fun MessageDetailScreen(
                         ) {
                             Column(Modifier.weight(1f)) {
                                 Text("Code", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
-                                Text(otp.code, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
+                                Text(otp["code"].orEmpty(), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
                                 Text(
-                                    "Detected from ${otp.source}",
+                                    "Detected from ${otp["source"] ?: "message body"}",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
                             }
                             IconButton(onClick = {
-                                clipboard.setText(AnnotatedString(otp.code))
+                                clipboard.setText(AnnotatedString(otp["code"].orEmpty()))
                                 snackbarHostState.let { /* fire and forget */ }
                             }) {
                                 Icon(Icons.Filled.ContentCopy, contentDescription = "Copy OTP")

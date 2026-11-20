@@ -53,8 +53,9 @@ fun HistoryScreen(
     val items by viewModel.history.collectAsStateWithLifecycle(initialValue = emptyList())
     val clipboard = LocalClipboardManager.current
 
-    LaunchedEffect(viewModel.message) {
-        viewModel.message?.let {
+    val message by viewModel.message.collectAsStateWithLifecycle()
+    LaunchedEffect(message) {
+        message?.let {
             snackbarHostState.showSnackbar(it)
             viewModel.consumeMessage()
         }
