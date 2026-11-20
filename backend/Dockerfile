@@ -15,7 +15,7 @@ RUN apt-get update \
 COPY backend/settings.gradle.kts backend/build.gradle.kts ./
 COPY backend/src src
 
-RUN gradle --no-daemon buildFatJar -x test || gradle --no-daemon fatJar -x test
+RUN gradle --no-daemon buildFatJar -x test
 
 # ---- Runtime stage ----
 FROM eclipse-temurin:17-jre-jammy

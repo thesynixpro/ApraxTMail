@@ -52,7 +52,7 @@ class ApiClient @Inject constructor() {
     val httpClient: HttpClient by lazy {
         HttpClient {
             expectSuccess = false
-            HttpTimeout {
+            install(HttpTimeout) {
                 requestTimeoutMillis = 30_000
                 connectTimeoutMillis = 10_000
                 socketTimeoutMillis = 30_000

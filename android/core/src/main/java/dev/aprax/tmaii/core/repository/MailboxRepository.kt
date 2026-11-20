@@ -125,11 +125,12 @@ class MailboxRepository @Inject constructor(
     )
 
     companion object {
-        fun parseIso(value: String?): Long? = value?.let {
-            runCatching {
-                java.time.OffsetDateTime.parse(it).toInstant().toEpochMilli()
+        fun parseIso(value: String?): Long? {
+            if (value == null) return null
+            return runCatching {
+                java.time.OffsetDateTime.parse(value).toInstant().toEpochMilli()
             }.recoverCatching {
-                java.time.Instant.parse(it).toEpochMilli()
+                java.time.Instant.parse(value).toEpochMilli()
             }.getOrNull()
         }
     }
