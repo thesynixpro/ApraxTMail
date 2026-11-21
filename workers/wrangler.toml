@@ -1,0 +1,26 @@
+name = "aprax-tmail"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "aprax_tmail"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+[[r2_buckets]]
+binding = "MAIL_BUCKET"
+bucket_name = "aprax-tmail-mail"
+
+[triggers]
+crons = ["17 4 * * *"]
+
+[vars]
+PUBLIC_BASE_URL = "https://aprax-tmail.workers.dev"
+EMAILIT_API_URL = "https://api.emailit.com/v2"
+MESSAGE_TTL_DAYS = "30"
+
+# Secrets (set with `wrangler secret put NAME`, never commit values):
+#   JWT_SECRET        — openssl rand -hex 32
+#   WEBHOOK_SECRET    — shared secret Emailit sends with webhook requests
+#   EMAILIT_API_KEY   — Emailit dashboard API key

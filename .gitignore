@@ -24,20 +24,17 @@ android/**/captures/
 *.jks
 !android/**/debug.keystore
 
-# Backend
-backend/build/
-backend/out/
+# Logs
 *.log
 
-# Node (if admin tooling ever needs it)
+# Node / Worker
 node_modules/
+workers/dist/
+.wrangler/
 
 # OS
 .DS_Store
 Thumbs.db
-
-# Docker volumes
-pgdata/
 
 # Claude/local
 .claude/
