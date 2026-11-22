@@ -15,7 +15,7 @@ android {
         minSdk = 26
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
-        buildConfigField("String", "DEFAULT_BASE_URL", "\"https://your-backend.example.com\"")
+        buildConfigField("String", "DEFAULT_BASE_URL", "\"https://aprax-tmail.workers.dev\"")
     }
 
     buildTypes {
@@ -54,9 +54,6 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
 
-    implementation(libs.room.runtime)
-    implementation(libs.room.ktx)
-    ksp(libs.room.compiler)
 
     implementation(libs.datastore.preferences)
 
@@ -66,7 +63,6 @@ dependencies {
     implementation(libs.ktor.client.auth)
     implementation(libs.ktor.serialization.kotlinx.json)
 
-    implementation(libs.coil.compose)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

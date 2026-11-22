@@ -1,46 +1,73 @@
 package dev.aprax.tmaii.feature.detail
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.aprax.tmaii.core.model.MessageDetail
-import dev.aprax.tmaii.core.network.ApiException
-import dev.aprax.tmaii.core.repository.MailboxRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import dev.aprax.tmaii.core.model.MessageDto
+import dev.aprax.tmaii.core.repository.InboxRepository
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-data class DetailState(
+data class DetailUiState(
     val loading: Boolean = true,
-    val detail: MessageDetail? = null,
+    val refreshing: Boolean = false,
     val error: String? = null,
+    val message: MessageDto? = null,
+    val deleted: Boolean = false,
 )
 
 @HiltViewModel
 class MessageDetailViewModel @Inject constructor(
-    private val repo: MailboxRepository,
+    savedStateHandle: SavedStateHandle,
+    private val inbox: InboxRepository,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(DetailState())
-    val state: StateFlow<DetailState> = _state
+    private val messageId: String = checkNotNull(savedStateHandle["messageId"])
 
-    fun load(mailboxId: String, messageId: String) {
+    var state by mutableStateOf(DetailUiState())
+        private set
+
+    var showHtml by mutableStateOf(true)
+        private set
+
+    init { load(markRead = true) }
+
+    fun load(markRead: Boolean = false, refreshing: Boolean = false) {
+        state = state.copy(error = null, refreshing = refreshing)
         viewModelScope.launch {
-            _state.value = DetailState(loading = true)
             try {
-                val detail = repo.messageDetail(mailboxId, messageId)
-                _state.value = DetailState(loading = false, detail = detail)
+                val msg = inbox.get(messageId)
+                if (markRead && !msg.read) {
+                    runCatching { inbox.markRead(messageId) }
+                    state = state.copy(message = msg.copy(read = true), loading = false, refreshing = false)
+                } else {
+                    state = state.copy(message = msg, loading = false, refreshing = false)
+                }
             } catch (e: Exception) {
-                _state.value = DetailState(
+                state = state.copy(
                     loading = false,
-                    error = (e as? ApiException)?.message ?: e.message ?: "Failed to load message",
+                    refreshing = false,
+                    error = e.message ?: "Could not load message",
                 )
             }
         }
     }
 
-    fun consumeError() {
-        _state.value = _state.value.copy(error = null)
+    fun toggleFormat() { showHtml = !showHtml }
+
+    fun delete(onDone: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                inbox.delete(messageId)
+                state = state.copy(deleted = true)
+                onDone()
+            } catch (e: Exception) {
+                state = state.copy(error = e.message ?: "Delete failed")
+            }
+        }
     }
 }

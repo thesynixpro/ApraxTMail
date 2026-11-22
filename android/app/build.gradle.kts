@@ -21,9 +21,6 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Backend base URL is build-time default ONLY. No secrets live here —
-        // provider API keys exist exclusively on the backend.
-        buildConfigField("String", "DEFAULT_BASE_URL", "\"https://your-backend.example.com\"")
     }
 
     signingConfigs {
@@ -93,11 +90,8 @@ dependencies {
     implementation(libs.navigation.compose)
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
-    implementation(libs.hilt.work)
     ksp(libs.hilt.compiler)
-    ksp(libs.hilt.ext.compiler)
 
-    implementation(libs.work.runtime.ktx)
 
     testImplementation(libs.junit)
 }

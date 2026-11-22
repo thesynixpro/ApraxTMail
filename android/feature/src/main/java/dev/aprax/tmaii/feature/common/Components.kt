@@ -32,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import dev.aprax.tmaii.core.ui.theme.LocalGlassMode
 
 @Composable
 fun LoadingState(modifier: Modifier = Modifier, label: String = "Loading…") {
@@ -156,5 +157,37 @@ fun StatusDot(color: Color, label: String) {
         )
         Spacer(Modifier.width(8.dp))
         Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+/** Surface card that becomes translucent with a light border in Liquid Glass mode. */
+@Composable
+fun GlassCard(
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    content: @Composable () -> Unit,
+) {
+    val glass = LocalGlassMode.current
+    val container = if (glass) Color(0x14FFFFFF) else MaterialTheme.colorScheme.surfaceContainer
+    val border = if (glass) Color(0x33FFFFFF) else Color.Transparent
+    val shape = RoundedCornerShape(20.dp)
+    val cardModifier = modifier
+        .fillMaxWidth()
+        .then(if (onClick != null) Modifier else Modifier)
+    if (onClick != null) {
+        Card(
+            onClick = onClick,
+            modifier = cardModifier,
+            shape = shape,
+            colors = CardDefaults.cardColors(containerColor = container),
+            border = androidx.compose.foundation.BorderStroke(1.dp, border),
+        ) { Box(Modifier.padding(16.dp)) { content() } }
+    } else {
+        Card(
+            modifier = cardModifier,
+            shape = shape,
+            colors = CardDefaults.cardColors(containerColor = container),
+            border = androidx.compose.foundation.BorderStroke(1.dp, border),
+        ) { Box(Modifier.padding(16.dp)) { content() } }
     }
 }

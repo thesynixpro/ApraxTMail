@@ -19,7 +19,6 @@ class SessionRepository @Inject constructor(
     private val settings: SettingsDataStore,
 ) {
     val tokenFlow: Flow<String?> = settings.authToken
-    val roleFlow: Flow<String?> = settings.authRole
     val emailFlow: Flow<String?> = settings.email
     val baseUrlFlow: Flow<String> = settings.baseUrl
 
@@ -31,31 +30,18 @@ class SessionRepository @Inject constructor(
     }
 
     suspend fun syncClientFromPrefs() {
-        client.baseUrl = settings.baseUrl.first().trimEnd('/')
-        client.authToken = settings.authToken.first()
-    }
-
-    suspend fun ensureSession(): String {
-        syncClientFromPrefs()
-        if (client.baseUrl.isBlank()) {
-            client.baseUrl = dev.aprax.tmaii.core.BuildConfig.DEFAULT_BASE_URL.trimEnd('/')
-            settings.setBaseUrl(client.baseUrl)
+        val stored = settings.baseUrl.first()
+        client.baseUrl = if (stored.isBlank()) {
+            dev.aprax.tmaii.core.BuildConfig.DEFAULT_BASE_URL.trimEnd('/')
+        } else {
+            stored.trimEnd('/')
         }
-        currentToken()?.let { return it }
-        return createGuest()
-    }
-
-    suspend fun createGuest(): String {
-        syncClientFromPrefs()
-        val resp: AuthResponse = api.createGuest()
-        persist(resp)
-        return resp.token
+        client.authToken = settings.authToken.first()
     }
 
     suspend fun register(email: String, password: String): AuthResponse {
         syncClientFromPrefs()
-        val guest = currentToken()
-        val resp = api.register(RegisterBody(email, password, guest))
+        val resp = api.register(RegisterBody(email, password))
         persist(resp)
         return resp
     }
@@ -68,8 +54,6 @@ class SessionRepository @Inject constructor(
     }
 
     suspend fun logout() {
-        syncClientFromPrefs()
-        runCatching { api.logout() }
         settings.clearSession()
         client.authToken = null
     }
@@ -81,8 +65,15 @@ class SessionRepository @Inject constructor(
 
     suspend fun health() = api.health()
 
+    suspend fun ensureBackendConfigured() {
+        syncClientFromPrefs()
+        if (settings.baseUrl.first().isBlank()) {
+            configureBackend(dev.aprax.tmaii.core.BuildConfig.DEFAULT_BASE_URL)
+        }
+    }
+
     private suspend fun persist(resp: AuthResponse) {
-        settings.setSession(resp.token, resp.role, resp.userId, resp.email)
+        settings.setSession(resp.token, resp.user.id, resp.user.email)
         client.authToken = resp.token
     }
 }

@@ -1,117 +1,101 @@
 package dev.aprax.tmaii.feature.generator
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dev.aprax.tmaii.core.model.ProviderDomain
-import dev.aprax.tmaii.core.model.ProviderInfo
-import dev.aprax.tmaii.core.model.ProviderQuota
-import dev.aprax.tmaii.core.network.ApiException
-import dev.aprax.tmaii.core.repository.MailboxRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import dev.aprax.tmaii.core.model.DomainDto
+import dev.aprax.tmaii.core.prefs.SettingsDataStore
+import dev.aprax.tmaii.core.repository.DomainRepository
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-data class GeneratorState(
-    val isLoading: Boolean = true,
-    val providers: List<ProviderInfo> = emptyList(),
-    val quotas: Map<String, ProviderQuota> = emptyMap(),
-    val domains: List<ProviderDomain> = emptyList(),
-    val selectedProvider: String = "",
-    val randomMode: Boolean = true,
-    val username: String = "",
-    val domain: String = "",
+data class GeneratorUiState(
+    val loading: Boolean = true,
     val creating: Boolean = false,
-    val createdAddress: String? = null,
     val error: String? = null,
+    val domains: List<DomainDto> = emptyList(),
+    val selectedDomainId: String? = null,
+    val createdAddress: String? = null,
 )
-
-// ProviderDomain lives in backend models; mirror a minimal shape for Android
-data class SimpleDomain(val domain: String, val usable: Boolean = true)
 
 @HiltViewModel
 class GeneratorViewModel @Inject constructor(
-    private val repo: MailboxRepository,
+    private val domains: DomainRepository,
+    private val settings: SettingsDataStore,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(GeneratorState())
-    val state: StateFlow<GeneratorState> = _state
+    var state by mutableStateOf(GeneratorUiState())
+        private set
+
+    var username by mutableStateOf("")
+        private set
+
+    init { load() }
 
     fun load() {
+        state = state.copy(loading = true, error = null)
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true, error = null)
             try {
-                val providers = repo.providers()
-                val quotas = repo.quotas().associateBy { it.providerId }
-                val default = providers.firstOrNull { it.enabled && it.configured }?.id
-                    ?: providers.firstOrNull()?.id
-                    ?: ""
-                _state.value = _state.value.copy(
-                    providers = providers,
-                    quotas = quotas,
-                    selectedProvider = _state.value.selectedProvider.ifBlank { default },
-                    isLoading = false,
+                val list = domains.listDomains()
+                val preferred = list.firstOrNull { it.verified }?.id ?: list.firstOrNull()?.id
+                state = GeneratorUiState(
+                    loading = false,
+                    domains = list,
+                    selectedDomainId = state.selectedDomainId ?: preferred,
                 )
-                loadDomains()
             } catch (e: Exception) {
-                _state.value = _state.value.copy(isLoading = false, error = e.message)
+                state = state.copy(loading = false, error = e.message ?: "Could not load domains")
             }
         }
     }
 
-    private suspend fun loadDomains() {
-        // Domains come through the providers endpoint capabilities; the backend
-        // exposes no dedicated domain list on the internal API, so custom mode
-        // lets the user type a domain that the provider validates on create.
-        _state.value = _state.value.copy(domains = emptyList())
+    fun onUsernameChange(v: String) {
+        username = v.lowercase().filter { it.isLetterOrDigit() || it in "._-" }
+        state = state.copy(error = null)
     }
 
-    fun selectProvider(id: String) {
-        _state.value = _state.value.copy(selectedProvider = id)
+    fun randomize() {
+        val words = listOf(
+            "swift", "nova", "pixel", "echo", "orbit", "drift", "quartz", "lunar",
+            "ember", "frost", "terra", "vivid", "cobalt", "onyx", "zephyr", "mint",
+        )
+        val a = words.random()
+        val b = words.random()
+        username = "$a.$b${(10..99).random()}"
     }
 
-    fun setRandomMode(random: Boolean) {
-        _state.value = _state.value.copy(randomMode = random)
-    }
-
-    fun setUsername(value: String) {
-        _state.value = _state.value.copy(username = value.filter { it.isLetterOrDigit() || it == '.' || it == '_' || it == '-' }.take(30))
-    }
-
-    fun setDomain(value: String) {
-        _state.value = _state.value.copy(domain = value)
+    fun selectDomain(id: String) {
+        state = state.copy(selectedDomainId = id, error = null)
     }
 
     fun create() {
-        val s = _state.value
+        val domainId = state.selectedDomainId
+        val local = username.trim()
+        if (domainId == null) {
+            state = state.copy(error = "Add a custom domain first")
+            return
+        }
+        if (local.isEmpty()) {
+            state = state.copy(error = "Enter a username or tap Random")
+            return
+        }
+        state = state.copy(creating = true, error = null)
         viewModelScope.launch {
-            _state.value = s.copy(creating = true, error = null, createdAddress = null)
             try {
-                val mailbox = repo.createMailbox(
-                    provider = s.selectedProvider,
-                    username = s.username.takeIf { !s.randomMode && it.isNotBlank() },
-                    domain = s.domain.takeIf { !s.randomMode && it.isNotBlank() },
-                    random = s.randomMode,
-                )
-                _state.value = _state.value.copy(
-                    creating = false,
-                    createdAddress = mailbox.address,
-                )
+                val address = domains.createAddress(domainId, local)
+                settings.setLastAddress(address.address)
+                state = state.copy(creating = false, createdAddress = address.address)
             } catch (e: Exception) {
-                _state.value = _state.value.copy(
-                    creating = false,
-                    error = (e as? ApiException)?.message ?: e.message ?: "Creation failed",
-                )
+                state = state.copy(creating = false, error = e.message ?: "Could not create address")
             }
         }
     }
 
-    fun consumeCreated() {
-        _state.value = _state.value.copy(createdAddress = null)
-    }
-
-    fun consumeError() {
-        _state.value = _state.value.copy(error = null)
+    fun reset() {
+        state = state.copy(createdAddress = null)
+        username = ""
     }
 }
