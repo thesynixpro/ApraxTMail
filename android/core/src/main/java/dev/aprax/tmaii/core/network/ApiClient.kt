@@ -94,7 +94,6 @@ class ApiClient @Inject constructor() {
                 code = parsed?.error ?: "http_${response.status.value}",
                 message = parsed?.message ?: "Request failed (${response.status.value})",
                 status = response.status.value,
-                retryAfter = parsed?.retryAfter,
             )
         }
         if (text.isBlank()) {
